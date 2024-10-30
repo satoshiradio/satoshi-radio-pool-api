@@ -92,7 +92,7 @@ func GetWorkerHashratesHandler(db *sql.DB) http.HandlerFunc {
 
 		rows, err := db.Query(`SELECT hashrate1m, hashrate5m, hashrate1hr, hashrate1d, hashrate7d, saved_at 
 			FROM user_workers 
-			WHERE username = ? AND workername = ? 
+			WHERE username = $1 AND workername = $2 
 			ORDER BY saved_at ASC`, username, workername)
 
 		if err != nil {
@@ -136,10 +136,11 @@ func GetUserHashratesHandler(db *sql.DB) http.HandlerFunc {
 
 		rows, err := db.Query(`SELECT hashrate1m, hashrate5m, hashrate1hr, hashrate1d, hashrate7d, saved_at 
 			FROM users 
-			WHERE username = ? 
+			WHERE username = $1 
 			ORDER BY saved_at ASC`, username)
 
 		if err != nil {
+			println(err.Error())
 			http.Error(w, "Error fetching hashrates", http.StatusInternalServerError)
 			return
 		}
