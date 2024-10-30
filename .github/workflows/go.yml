@@ -22,10 +22,10 @@ jobs:
         go-version: '1.22.2'
 
     - name: Build
-      run: go build -v -o satoshi-radio-pool-api ./...  
-
+      run: go build -v -o ./build/satoshi-radio-pool-api ./...
+      
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
       with:
         name: satoshi-radio-pool-api 
-        path: satoshi-radio-pool-api         
+        path: ./build/satoshi-radio-pool-api         
