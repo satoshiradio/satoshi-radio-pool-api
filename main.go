@@ -11,8 +11,17 @@ import (
 
 	gohandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, relying on system environment variables")
+	} else {
+		log.Println(".env file loaded successfully")
+	}
+}
 func main() {
 	// Initialize the SQLite database
 	database, err := db.InitDB()
@@ -34,7 +43,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/v1/pool", handlers.GetPoolStatusHandler()).Methods("GET")
 	router.HandleFunc("/api/v1/pool/hashrates", handlers.GetPoolHashratesHandler(database)).Methods("GET")
-	router.HandleFunc("/api/v1/users", handlers.GetUsersHandler()).Methods("GET")
+	//router.HandleFunc("/api/v1/users", handlers.GetUsersHandler()).Methods("GET") // temporary disabled for privacy reasons
 	router.HandleFunc("/api/v1/users/{username}", handlers.GetUserHandler()).Methods("GET")
 	router.HandleFunc("/api/v1/users/{username}/hashrates", handlers.GetUserHashratesHandler(database)).Methods("GET")
 	router.HandleFunc("/api/v1/users/{username}/workers/{workername}/hashrates", handlers.GetWorkerHashratesHandler(database)).Methods("GET")

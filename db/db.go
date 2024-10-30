@@ -2,19 +2,20 @@ package db
 
 import (
 	"bufio"
+	"ck-pool-api/models"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
-
-	"ck-pool-api/models"
-	_ "modernc.org/sqlite"
 )
 
 func InitDB() (*sql.DB, error) {
-	db, err := sql.Open("sqlite", "./pooldata.db")
+	connStr := getPostgresConnStr()
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -25,10 +26,23 @@ func InitDB() (*sql.DB, error) {
 	return db, nil
 }
 
+// getPostgresConnStr constructs the PostgreSQL connection string from environment variables
+func getPostgresConnStr() string {
+	user := os.Getenv("POSTGRES_USER")
+	password := os.Getenv("POSTGRES_PASSWORD")
+	dbname := os.Getenv("POSTGRES_DB")
+	host := os.Getenv("POSTGRES_HOST")
+	port := os.Getenv("POSTGRES_PORT")
+
+	// Construct PostgreSQL connection string
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+}
+
 func createTables(db *sql.DB) {
 	// Pool status table
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS pool_status (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY,
 		runtime INTEGER, 
 		lastupdate INTEGER, 
 		users INTEGER, 
@@ -50,7 +64,7 @@ func createTables(db *sql.DB) {
 		sps5m REAL, 
 		sps15m REAL, 
 		sps1h REAL,
-    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`)
 
 	if err != nil {
@@ -59,8 +73,8 @@ func createTables(db *sql.DB) {
 
 	// Users table
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		username TEXT, 
+		id SERIAL PRIMARY KEY,
+		username TEXT UNIQUE, 
 		hashrate1m TEXT, 
 		hashrate5m TEXT, 
 		hashrate1hr TEXT, 
@@ -72,29 +86,31 @@ func createTables(db *sql.DB) {
 		bestshare REAL, 
 		bestever INTEGER, 
 		authorised INTEGER,
-    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// User workers table
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS user_workers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT,  -- Foreign key for user identification
-    workername TEXT,
-    hashrate1m TEXT,
-    hashrate5m TEXT,
-    hashrate1hr TEXT,
-    hashrate1d TEXT,
-    hashrate7d TEXT,
-    lastshare INTEGER,
-    shares INTEGER,
-    bestshare REAL,
-    bestever REAL,
-    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(username) REFERENCES users(username)
-);`)
+		id SERIAL PRIMARY KEY,
+		username TEXT REFERENCES users(username), -- Foreign key for user identification
+		workername TEXT,
+		hashrate1m TEXT,
+		hashrate5m TEXT,
+		hashrate1hr TEXT,
+		hashrate1d TEXT,
+		hashrate7d TEXT,
+		lastshare INTEGER,
+		shares INTEGER,
+		bestshare REAL,
+		bestever REAL,
+		saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (username, workername)  -- Add unique constraint here
+
+	);`)
 
 	if err != nil {
 		log.Fatal(err)
@@ -121,8 +137,9 @@ func StorePoolStatus(db *sql.DB, filePath string) {
 		}
 	}
 
-	_, err = db.Exec(`INSERT INTO pool_status (runtime,lastupdate, users, workers, idle, disconnected, hashrate1m, hashrate5m, hashrate15m, hashrate1hr, hashrate6hr, hashrate1d, hashrate7d, diff, accepted, rejected, bestshare, sps1m, sps5m, sps15m, sps1h) 
-	VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	// Insert pool status into the database
+	_, err = db.Exec(`INSERT INTO pool_status (runtime, lastupdate, users, workers, idle, disconnected, hashrate1m, hashrate5m, hashrate15m, hashrate1hr, hashrate6hr, hashrate1d, hashrate7d, diff, accepted, rejected, bestshare, sps1m, sps5m, sps15m, sps1h) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
 		poolStatus.Runtime, poolStatus.LastUpdate, poolStatus.Users, poolStatus.Workers, poolStatus.Idle, poolStatus.Disconnected,
 		poolStatus.Hashrate1m, poolStatus.Hashrate5m, poolStatus.Hashrate15m, poolStatus.Hashrate1hr, poolStatus.Hashrate6hr, poolStatus.Hashrate1d, poolStatus.Hashrate7d,
 		poolStatus.Diff, poolStatus.Accepted, poolStatus.Rejected, poolStatus.BestShare, poolStatus.SPS1m, poolStatus.SPS5m, poolStatus.SPS15m, poolStatus.SPS1h)
@@ -154,18 +171,27 @@ func StoreUserFiles(db *sql.DB, usersDir string) {
 				return nil
 			}
 
-			// Insert into database (ensure 12 values are passed)
+			// Insert user data into the users table
 			_, err = db.Exec(`INSERT INTO users (username, hashrate1m, hashrate5m, hashrate1hr, hashrate1d, hashrate7d, lastshare, workers, shares, bestshare, bestever, authorised) 
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+				ON CONFLICT (username) DO UPDATE SET 
+				hashrate1m = EXCLUDED.hashrate1m, hashrate5m = EXCLUDED.hashrate5m, hashrate1hr = EXCLUDED.hashrate1hr,
+				hashrate1d = EXCLUDED.hashrate1d, hashrate7d = EXCLUDED.hashrate7d, lastshare = EXCLUDED.lastshare,
+				workers = EXCLUDED.workers, shares = EXCLUDED.shares, bestshare = EXCLUDED.bestshare, bestever = EXCLUDED.bestever, authorised = EXCLUDED.authorised`,
 				username, user.Hashrate1m, user.Hashrate5m, user.Hashrate1hr, user.Hashrate1d, user.Hashrate7d, user.LastShare, user.Workers, user.Shares, user.BestShare, user.BestEver, user.Authorised)
 
 			if err != nil {
 				log.Printf("Error inserting user data for %s into database: %v", username, err)
 			}
+
 			// Now insert each worker's data into the user_workers table
 			for _, worker := range user.Worker {
 				_, err = db.Exec(`INSERT INTO user_workers (username, workername, hashrate1m, hashrate5m, hashrate1hr, hashrate1d, hashrate7d, lastshare, shares, bestshare, bestever) 
-					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+					ON CONFLICT (username, workername) DO UPDATE SET 
+					hashrate1m = EXCLUDED.hashrate1m, hashrate5m = EXCLUDED.hashrate5m, hashrate1hr = EXCLUDED.hashrate1hr,
+					hashrate1d = EXCLUDED.hashrate1d, hashrate7d = EXCLUDED.hashrate7d, lastshare = EXCLUDED.lastshare,
+					shares = EXCLUDED.shares, bestshare = EXCLUDED.bestshare, bestever = EXCLUDED.bestever`,
 					username, worker.WorkerName, worker.Hashrate1m, worker.Hashrate5m, worker.Hashrate1hr, worker.Hashrate1d, worker.Hashrate7d, worker.LastShare, worker.Shares, worker.BestShare, worker.BestEver)
 
 				if err != nil {
