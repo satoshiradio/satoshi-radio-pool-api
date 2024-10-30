@@ -43,8 +43,8 @@ func createTables(db *sql.DB) {
 	// Pool status table
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS pool_status (
 		id SERIAL PRIMARY KEY,
-		runtime INTEGER, 
-		lastupdate INTEGER, 
+		runtime BIGINT,
+		lastupdate BIGINT,
 		users INTEGER, 
 		workers INTEGER, 
 		idle INTEGER, 
@@ -57,9 +57,9 @@ func createTables(db *sql.DB) {
 		hashrate1d TEXT, 
 		hashrate7d TEXT, 
 		diff REAL, 
-		accepted INTEGER, 
-		rejected INTEGER, 
-		bestshare INTEGER, 
+		accepted BIGINT, 
+		rejected BIGINT, 
+		bestshare BIGINT, 
 		sps1m REAL, 
 		sps5m REAL, 
 		sps15m REAL, 
@@ -80,12 +80,12 @@ func createTables(db *sql.DB) {
 		hashrate1hr TEXT, 
 		hashrate1d TEXT, 
 		hashrate7d TEXT, 
-		lastshare INTEGER, 
+		lastshare BIGINT, 
 		workers INTEGER, 
-		shares INTEGER, 
+		shares BIGINT, 
 		bestshare REAL, 
-		bestever INTEGER, 
-		authorised INTEGER,
+		bestever BIGINT, 
+		authorised BIGINT,
 		saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`)
 
@@ -96,20 +96,19 @@ func createTables(db *sql.DB) {
 	// User workers table
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS user_workers (
 		id SERIAL PRIMARY KEY,
-		username TEXT REFERENCES users(username), -- Foreign key for user identification
+		username TEXT REFERENCES users(username),
 		workername TEXT,
 		hashrate1m TEXT,
 		hashrate5m TEXT,
 		hashrate1hr TEXT,
 		hashrate1d TEXT,
 		hashrate7d TEXT,
-		lastshare INTEGER,
-		shares INTEGER,
+		lastshare BIGINT,
+		shares BIGINT,
 		bestshare REAL,
-		bestever REAL,
+		bestever BIGINT,
 		saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (username, workername)  -- Add unique constraint here
-
+		UNIQUE (username, workername)
 	);`)
 
 	if err != nil {
