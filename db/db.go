@@ -74,7 +74,7 @@ func createTables(db *sql.DB) {
 	// Users table
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
-		username TEXT UNIQUE, 
+		username TEXT, 
 		hashrate1m TEXT, 
 		hashrate5m TEXT, 
 		hashrate1hr TEXT, 
@@ -96,7 +96,7 @@ func createTables(db *sql.DB) {
 	// User workers table
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS user_workers (
 		id SERIAL PRIMARY KEY,
-		username TEXT REFERENCES users(username),
+		username TEXT, 
 		workername TEXT,
 		hashrate1m TEXT,
 		hashrate5m TEXT,
@@ -107,8 +107,7 @@ func createTables(db *sql.DB) {
 		shares BIGINT,
 		bestshare REAL,
 		bestever BIGINT,
-		saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		UNIQUE (username, workername)
+		saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`)
 
 	if err != nil {
@@ -172,11 +171,7 @@ func StoreUserFiles(db *sql.DB, usersDir string) {
 
 			// Insert user data into the users table
 			_, err = db.Exec(`INSERT INTO users (username, hashrate1m, hashrate5m, hashrate1hr, hashrate1d, hashrate7d, lastshare, workers, shares, bestshare, bestever, authorised) 
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
-				ON CONFLICT (username) DO UPDATE SET 
-				hashrate1m = EXCLUDED.hashrate1m, hashrate5m = EXCLUDED.hashrate5m, hashrate1hr = EXCLUDED.hashrate1hr,
-				hashrate1d = EXCLUDED.hashrate1d, hashrate7d = EXCLUDED.hashrate7d, lastshare = EXCLUDED.lastshare,
-				workers = EXCLUDED.workers, shares = EXCLUDED.shares, bestshare = EXCLUDED.bestshare, bestever = EXCLUDED.bestever, authorised = EXCLUDED.authorised`,
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
 				username, user.Hashrate1m, user.Hashrate5m, user.Hashrate1hr, user.Hashrate1d, user.Hashrate7d, user.LastShare, user.Workers, user.Shares, user.BestShare, user.BestEver, user.Authorised)
 
 			if err != nil {
@@ -186,11 +181,7 @@ func StoreUserFiles(db *sql.DB, usersDir string) {
 			// Now insert each worker's data into the user_workers table
 			for _, worker := range user.Worker {
 				_, err = db.Exec(`INSERT INTO user_workers (username, workername, hashrate1m, hashrate5m, hashrate1hr, hashrate1d, hashrate7d, lastshare, shares, bestshare, bestever) 
-					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-					ON CONFLICT (username, workername) DO UPDATE SET 
-					hashrate1m = EXCLUDED.hashrate1m, hashrate5m = EXCLUDED.hashrate5m, hashrate1hr = EXCLUDED.hashrate1hr,
-					hashrate1d = EXCLUDED.hashrate1d, hashrate7d = EXCLUDED.hashrate7d, lastshare = EXCLUDED.lastshare,
-					shares = EXCLUDED.shares, bestshare = EXCLUDED.bestshare, bestever = EXCLUDED.bestever`,
+					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
 					username, worker.WorkerName, worker.Hashrate1m, worker.Hashrate5m, worker.Hashrate1hr, worker.Hashrate1d, worker.Hashrate7d, worker.LastShare, worker.Shares, worker.BestShare, worker.BestEver)
 
 				if err != nil {
