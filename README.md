@@ -12,7 +12,6 @@ The Satoshi Radio Pool API is a Go application designed to manage and provide da
 - [Getting Started](#getting-started)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [Database Setup](#database-setup)
 - [API Documentation](#api-documentation)
 - [Contributing](#contributing)
 
