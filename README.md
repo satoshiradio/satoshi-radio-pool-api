@@ -27,11 +27,11 @@ Ensure you have the following installed:
 
 ### Installation
 
-#### Option 1: use the relase binary
+### Option 1: use the relase binary
 
 Download the latest release from the [releases page](https://github.com/satoshiradio/satoshi-radio-pool-api/releases)
 
-#### Option 2: build from source
+### Option 2: build from source
 
 1. Clone the repository:
 
@@ -56,7 +56,7 @@ go build -o satoshi-radio-pool-api main.go
 
 Configuring the application is done through environment variables. Update your environment variables to connect to PostgreSQL or set up directly on the system environment if not using a `.env` file.
 
-#### Option 1: use an `.env` file
+### Option 1: use an `.env` file
 
 Create a `.env` file in the root directory of the project with the following variables:
 
@@ -74,7 +74,7 @@ you can then start the server by running:
 ```
 
 
-#### Option 2: set environment variables directly on the system
+### Option 2: set environment variables directly on the system
 
 ```bash
 export POSTGRES_USER=username
@@ -89,7 +89,7 @@ you can then start the server by running:
 ./satoshi-radio-pool-api
 ```
 
-#### Option 3: use systemctl
+### Option 3: use systemctl
 
 Create a service file in `/etc/systemd/system/satoshi-radio-pool-api.service`:
 
@@ -236,28 +236,58 @@ GET /api/v1/users/{username}/hashrates
 
 Retrieve hashrate data for a specific user.
 
+Example data:
+
+```json
+[
+  {
+    "hashrate1m": "100 GH/s",
+    "hashrate5m": "120 GH/s",
+    "hashrate15m": "115 GH/s",
+    "hashrate1hr": "110 GH/s",
+    "hashrate6hr": "105 GH/s",
+    "hashrate1d": "102 GH/s",
+    "hashrate7d": "98 GH/s",
+    "saved_at": 2024-10-30T10:06:32.345409Z
+  },
+  .....
+]
+```
+
 5. User Worker Data
 
 GET /api/v1/users/{username}/workers/{workername}/hashrates
 
-Fetch detailed hashrate data for a specific worker under a user.
+Retrieve detailed hashrate data for a specific worker under a user.
 
-CORS
+Example data:
+
+  ```json
+  {
+    "hashrate1m": "100 GH/s",
+    "hashrate5m": "120 GH/s",
+    "hashrate15m": "115 GH/s",
+    "hashrate1hr": "110 GH/s",
+    "hashrate6hr": "105 GH/s",
+    "hashrate1d": "102 GH/s",
+    "hashrate7d": "98 GH/s",
+    "saved_at": 2024-10-30T10:06:32.345409Z
+  }
+  ```
+
+
+
+## CORS
 
 CORS is enabled on all routes, allowing for requests from any origin.
 
 Running the Application
 
-Start the server:
 
-go run main.go
-
-Contributing
+## Contributing
 
 Contributions are welcome! Fork the repo, create a new branch for your feature or bugfix, and submit a pull request.
 
-License
+## License
 
-This project is licensed under the MIT License.
-
-Let me know if you want further customization for specific sections!
+GNU Public license V3. See included LICENCE for details.
