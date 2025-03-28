@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"ck-pool-api/db"
@@ -22,7 +23,14 @@ func init() {
 		log.Println(".env file loaded successfully")
 	}
 }
+
 func main() {
+	// Load POOL_BASE_PATH from environment variables
+	poolBasePath := os.Getenv("POOL_BASE_PATH")
+	if poolBasePath == "" {
+		log.Fatal("POOL_BASE_PATH is not set in .env or environment variables")
+	}
+
 	// Initialize the SQLite database
 	database, err := db.InitDB()
 	if err != nil {
@@ -32,9 +40,12 @@ func main() {
 
 	// Start goroutine for saving data every 5 minutes
 	go func() {
+		poolStatusPath := fmt.Sprintf("%s/logs/pool/pool.status", poolBasePath)
+		userFilesPath := fmt.Sprintf("%s/logs/users", poolBasePath)
+
 		for {
-			db.StorePoolStatus(database, "ckpool/logs/pool/pool.status")
-			db.StoreUserFiles(database, "ckpool/logs/users")
+			db.StorePoolStatus(database, poolStatusPath)
+			db.StoreUserFiles(database, userFilesPath)
 			time.Sleep(5 * time.Minute)
 		}
 	}()

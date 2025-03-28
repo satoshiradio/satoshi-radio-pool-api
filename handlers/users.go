@@ -13,9 +13,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var poolBasePath = os.Getenv("POOL_BASE_PATH")
+
 func GetUsersHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		usersDir := "ckpool/logs/users"
+		usersDir := fmt.Sprintf("%s/logs/users", poolBasePath)
 
 		// Open the users directory and list files
 		files, err := ioutil.ReadDir(usersDir)
@@ -53,7 +55,7 @@ func GetUserHandler() http.HandlerFunc {
 			http.Error(w, "Invalid username format", http.StatusBadRequest)
 			return
 		}
-		filePath := "ckpool/logs/users/" + username
+		filePath := fmt.Sprintf("%s/logs/users/%s", poolBasePath, username)
 
 		// Check if the file exists
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
