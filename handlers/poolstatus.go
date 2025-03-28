@@ -13,8 +13,6 @@ import (
 	"ck-pool-api/models"
 )
 
-var poolBasePath = os.Getenv("POOL_BASE_PATH")
-
 func GetPoolStatusHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		filePath := fmt.Sprintf("%s/logs/pool/pool.status", os.Getenv("POOL_BASE_PATH"))

@@ -14,8 +14,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var poolBasePath = os.Getenv("POOL_BASE_PATH")
-
 func GetUsersHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		usersDir := fmt.Sprintf("%s/users", os.Getenv("POOL_BASE_PATH"))
