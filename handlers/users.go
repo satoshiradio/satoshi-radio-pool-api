@@ -4,6 +4,7 @@ import (
 	"ck-pool-api/models"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,7 +18,7 @@ var poolBasePath = os.Getenv("POOL_BASE_PATH")
 
 func GetUsersHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		usersDir := fmt.Sprintf("%s/logs/users", poolBasePath)
+		usersDir := fmt.Sprintf("%s/users", os.Getenv("POOL_BASE_PATH"))
 
 		// Open the users directory and list files
 		files, err := ioutil.ReadDir(usersDir)
@@ -55,7 +56,7 @@ func GetUserHandler() http.HandlerFunc {
 			http.Error(w, "Invalid username format", http.StatusBadRequest)
 			return
 		}
-		filePath := fmt.Sprintf("%s/logs/users/%s", poolBasePath, username)
+		filePath := fmt.Sprintf("%s/logs/users/%s", os.Getenv("POOL_BASE_PATH"), username)
 
 		// Check if the file exists
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
