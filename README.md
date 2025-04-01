@@ -99,7 +99,7 @@ After=network.target
 
 [Service]
 # The path to the application binary
-ExecStart=/opt/pool/ck-pool-api
+ExecStart=/opt/pool/satoshi-radio-pool-api
 
 # The working directory (where the pool and user directories are located)
 WorkingDirectory=/opt/pool
