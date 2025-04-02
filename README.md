@@ -65,6 +65,8 @@ POSTGRES_PASSWORD=password
 POSTGRES_DB=ckpool
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
+
+POOL_BASE_PATH=/path/to/ckpool
 ```
 you can then start the server by running:
 
@@ -81,6 +83,8 @@ export POSTGRES_PASSWORD=password
 export POSTGRES_DB=ckpool
 export POSTGRES_HOST=localhost
 export POSTGRES_PORT=5432
+
+POOL_BASE_PATH=/path/to/ckpool
 ```
 you can then start the server by running:
 
@@ -117,6 +121,7 @@ Environment="POSTGRES_PASSWORD=password"
 Environment="POSTGRES_DB=ckpool_api"
 Environment="POSTGRES_HOST=localhost"
 Environment="POSTGRES_PORT=5432"
+Environment="POOL_BASE_PATH=/path/to/ckpool"
 
 [Install]
 # Start the service when the system boots

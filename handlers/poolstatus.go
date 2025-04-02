@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 
 func GetPoolStatusHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		filePath := "ckpool/logs/pool/pool.status"
+		filePath := fmt.Sprintf("%s/logs/pool/pool.status", os.Getenv("POOL_BASE_PATH"))
 
 		// Open the pool.status file
 		file, err := os.Open(filePath)
