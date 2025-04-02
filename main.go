@@ -26,10 +26,16 @@ func init() {
 
 func main() {
 	// Load POOL_BASE_PATH from environment variables
-	poolBasePath := os.Getenv("POOL_BASE_PATH")
-	if poolBasePath == "" {
-		log.Fatal("POOL_BASE_PATH is not set in .env or environment variables")
-	}
+        poolBasePath := os.Getenv("POOL_BASE_PATH")
+        if poolBasePath == "" {
+                homeDir, err := os.UserHomeDir()
+                if err != nil {
+                        log.Fatal("POOL_BASE_PATH is not set and failed to determine home directory")
+                }
+
+                poolBasePath = fmt.Sprintf("%s/ckpool", homeDir)
+                log.Printf("POOL_BASE_PATH is not set. Using default: %s\n", poolBasePath)
+        }
 
 	// Initialize the SQLite database
 	database, err := db.InitDB()
